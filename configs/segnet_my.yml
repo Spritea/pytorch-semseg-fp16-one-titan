@@ -1,0 +1,27 @@
+model:
+    arch: segnet
+data:
+    dataset: my
+    train_split: train
+    val_split: val
+    img_rows: 400
+    img_cols: 400
+    path: dataset/06-Vahingen-train8-edit-precode/
+training:
+#    train_iters: 300000
+    train_epoch: 10
+    batch_size: 12
+    val_interval: 50
+    n_workers: 16
+    print_interval: 50
+    optimizer:
+        name: 'sgd'
+        lr: 1.0e-3
+        weight_decay: 0.0005
+        momentum: 0.99
+
+    loss:
+        name: 'cross_entropy'
+        size_average: True
+    lr_schedule:
+    resume: segnet_my_best_model.pkl

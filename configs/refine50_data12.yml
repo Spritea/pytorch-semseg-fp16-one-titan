@@ -1,0 +1,29 @@
+model:
+    arch: refinenet50
+data:
+    dataset: my
+    train_split: train
+    val_split: val
+    img_rows: 512
+    img_cols: 512
+    path: dataset/12-Postdam-train26-augx3/
+training:
+#    train_iters: 300000
+    train_epoch: 100
+    batch_size: 6
+    val_interval: 1000
+#    val_epoch: 1
+    n_workers: 16
+    print_interval: 50
+    optimizer:
+        name: 'sgd'
+        lr: 1.0e-4
+#        lr: 1.0e-2
+
+        weight_decay: 0.0005
+        momentum: 0.99
+    loss:
+        name: 'cross_entropy'
+        size_average: True
+    lr_schedule:
+    resume: refinenet50_my_best_model.pkl

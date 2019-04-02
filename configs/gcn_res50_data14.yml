@@ -1,0 +1,27 @@
+model:
+    arch: gcn
+data:
+    dataset: my
+    train_split: train
+    val_split: val
+    img_rows: 512
+    img_cols: 512
+    path: dataset/14-Postdam-train18-noaug/
+training:
+#    train_iters: 300000
+    train_epoch: 100
+    batch_size: 2
+    val_interval: 500
+    n_workers: 16
+    print_interval: 50
+    optimizer:
+        name: 'sgd'
+        lr: 1.0e-4
+        weight_decay: 0.0005
+        momentum: 0.99
+
+    loss:
+        name: 'cross_entropy'
+        size_average: True
+    lr_schedule:
+    resume: gcn_res50_my_best_model.pkl
