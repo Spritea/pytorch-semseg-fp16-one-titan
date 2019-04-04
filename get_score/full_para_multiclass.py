@@ -28,8 +28,10 @@ for j in GT_File:
 prefix='/home/spl03/code/pytorch-semseg-fp16/get_score/Vaihingen/PR/deeplabv3_plus'
 
 # th=0.98
-th=list(np.arange(0,0.99,0.02))
-th.extend([0.99,0.999,0.9999,0.99999])
+th_behind=list(np.arange(0.02,0.99,0.02))
+th_behind.extend([0.99,0.999,0.9999,0.99999])
+th=[0,0.003,0.005,0.008,0.01,0.013,0.015,0.018]
+th.extend(th_behind)
 pre=[]
 rec=[]
 t = time.time()
@@ -79,9 +81,11 @@ def full_one(th,object):
     print(cls_rec)
 
 for object in object_class:
+    pre = []
+    rec = []
     for item in th:
         print("class: %d"%object)
-        print("th: %f"%th)
+        print("th: %f"%item)
         full_one(item,object)
 
     pre_path = prefix + '/' + 'pre_' + str(object) + '.npy'
