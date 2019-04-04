@@ -19,7 +19,15 @@ def combine_one(np_list,np_path,height,width):
         for j in range(img_col):
             p = np.load(np_list[j + k * img_col])
             # 把channel换到后面去,方便下面拼接时的维度设置
-            p = np.reshape(p, [small_height, small_width, channel])
+            # 这是错的
+            # p = np.reshape(p_ori, [small_height, small_width, channel])
+            # 下面才是对的
+            # 或者用pytorch的permute函数来换tensor
+            # (C,H,W)->(W,H,C)
+            # C-channel,H-height,W-width
+            p = p.swapaxes(0, 2)
+            # (W,H,C)->(H,W,C)
+            p = p.swapaxes(0, 1)
             if j + 1 == img_col and k + 1 < img_row and col_res > 0:
                 p=p[:,(small_width-col_res):,:]
                 # np_large[k * small_height:(k + 1) * small_height,
@@ -43,7 +51,8 @@ def combine_one(np_list,np_path,height,width):
 id_list=['2_12','2_13','2_14','3_12','3_13','3_14','4_12','4_13','4_14','4_15',
          '5_12','5_13','5_14','5_15','6_12','6_13','6_14','6_15','7_12','7_13']
 
-Numpy_Path = Path("/home/spl03/code/pytorch-semseg-fp16/test_out/potsdam/data14/numpy_softmax/mv3_1_true_2_res50")
+Numpy_Path = Path("/home/spl03/code/pytorch-semseg-fp16/test_out/potsdam/data14/numpy_softmax/deeplabv3_plus")
+out_path_prefix = "/home/spl03/code/pytorch-semseg-fp16/test_out/potsdam/data14/numpy_softmax/combined_numpy/deeplabv3_plus"
 Large_Path = Path("/home/spl03/code/pytorch-semseg-fp16/get_score/Postdam/val_gt_full")
 Large_File = natsort.natsorted(list(Large_Path.glob("*.tif")), alg=natsort.PATH)
 Large_Str = []
@@ -59,9 +68,10 @@ for k in tqdm(range(len(id_list))):
     large_img=cv2.imread(Large_Str[k],1)
     height,width,_=large_img.shape
 
-    out_path_prefix = "/home/spl03/code/pytorch-semseg-fp16/test_out/potsdam/data14/numpy_softmax/combined_numpy/mv3_1_true_2_res50"
     out_name='potsdam_'+id_list[k]+'_pred.npy'
-    combine_one(Numpy_Str,out_name,width,height)
+    # 下面的长宽搞反了
+    # combine_one(Numpy_Str,out_name,width,height)
+    combine_one(Numpy_Str, out_name, height, width)
 
 
 

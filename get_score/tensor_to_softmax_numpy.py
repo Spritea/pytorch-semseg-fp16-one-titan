@@ -14,7 +14,10 @@ for j in Tensor_File:
 prefix="/home/spl03/code/pytorch-semseg-fp16/test_out/potsdam/data14/numpy_softmax/mv3_1_true_2_res50/"
 for k in tqdm(range(len(Tensor_Str))):
     tensor=torch.load(Tensor_Str[k])
+    tensor_one=tensor[:,:,0,0]
     tensor=F.softmax(tensor)
+    tensor_one_soft=tensor[:,:,0,0]
     numpy_array=np.squeeze(tensor.data.cpu().numpy(), axis=0)
+    numpy_one=numpy_array[:,0,0]
     numpy_name=prefix+Path(Tensor_Str[k]).stem + ".npy"
-    np.save(numpy_name,numpy_array)
+    # np.save(numpy_name,numpy_array)

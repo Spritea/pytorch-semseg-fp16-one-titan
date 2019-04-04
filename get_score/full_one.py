@@ -9,87 +9,59 @@ from get_score.metrics_my import runningScore
 from tqdm import tqdm
 from multiprocessing.dummy import Pool as ThreadPool
 
-def decode_segmap(temp):
-    Imps = [0, 0, 0]
-    Building = [100, 100, 100]
-    Lowvg = [150, 150, 150]
-    Tree = [200, 200, 200]
-    Car = [250, 250, 250]
-    # bg = [255,0,0]
-
-    label_colours = np.array(
-        [
-            Imps,
-            Building,
-            Lowvg,
-            Tree,
-            Car,
-            # bg,
-        ]
-    )
-    r = temp.copy()
-    g = temp.copy()
-    b = temp.copy()
-    for l in range(0, 5):
-        r[temp == l] = label_colours[l, 0]
-        g[temp == l] = label_colours[l, 1]
-        b[temp == l] = label_colours[l, 2]
-    # rgb = np.zeros((temp.shape[0], temp.shape[1], 3))
-    rgb = np.zeros((temp.shape[0], temp.shape[1], 3), dtype=np.uint8)
-    # rgb[:, :, 0] = r / 255.0
-    # rgb[:, :, 1] = g / 255.0
-    # rgb[:, :, 2] = b / 255.0
-    rgb[:, :, 0] = r
-    rgb[:, :, 1] = g
-    rgb[:, :, 2] = b
-    return rgb
 
 def load_image(path):
     image = cv.cvtColor(cv.imread(path, 1), cv.COLOR_BGR2RGB)
     return image
 
-Tensor_Path = Path("/home/ali/cws/pytorch-semseg-dvs/test_out/deeplabv3/tensors")
+Tensor_Path = Path("/home/spl03/code/pytorch-semseg-fp16/test_out/vaihingen/data07_or_08/numpy_softmax/combined_numpy/mv3_1_true_2_res50")
 Tensor_File = natsort.natsorted(list(Tensor_Path.glob("*.npy")), alg=natsort.PATH)
 Tensor_Str = []
 for j in Tensor_File:
     Tensor_Str.append(str(j))
 
-GT_Path = Path("/home/ali/cws/pytorch-semseg-dvs/dataset/binary_resize_250")
-GT_File = natsort.natsorted(list(GT_Path.glob("*.bmp")), alg=natsort.PATH)
+GT_Path = Path("/home/spl03/code/pytorch-semseg-fp16/get_score/Vaihingen/val_gt_full")
+GT_File = natsort.natsorted(list(GT_Path.glob("*.tif")), alg=natsort.PATH)
 GT_Str = []
 for j in GT_File:
     GT_Str.append(str(j))
 
-th=0.98
+th=0
 # th=list(np.arange(0,0.99,0.02))
 pre=[]
 rec=[]
 t = time.time()
 running_metrics_val = runningScore(2)
-label_values = [[0, 0, 0], [250, 250, 250]]
-# label_values = [[255, 255, 255], [0, 0, 255], [0, 255, 255], [0, 255, 0], [255, 255, 0], [255, 0, 0], [0, 0, 0]]
+# label_values_binary = [[0, 0, 0], [250, 250, 250]]
+# label_values = [[255, 255, 255], [0, 0, 255], [0, 255, 255], [0, 255, 0], [255, 255, 0], [255, 0, 0],[0,0,0]]
+# 注意不要[0,0,0],这是local evaluation.
+label_values = [[255, 255, 255], [0, 0, 255], [0, 255, 255], [0, 255, 0], [255, 255, 0], [255, 0, 0]]
 
+
+object_class=1
 def compute_one(img_path,gt_path):
-    out = img_path
     gt = load_image(gt_path)
     # val_gt_erode paired with [0,0,0]label value
     # label order: R G B
     # num_classes = len(label_values)
     gt = util.reverse_one_hot(util.one_hot_it(gt, label_values))
-    output_image = util.reverse_one_hot(util.one_hot_it(out, label_values))
-    running_metrics_val.update(gt, output_image)
+    gt_binary=np.zeros(gt.shape,dtype=np.uint8)
+    gt_binary[gt==object_class]=1
+    output_image = img_path
+    running_metrics_val.update(gt_binary, output_image)
 
 
 def full_one():
     running_metrics_val.reset()
     for k in range(len(Tensor_Str)):
-        lanes_one_channel = np.load(Tensor_Str[k])
-        pred = np.zeros((256, 512), dtype=np.uint)
+        lanes=np.load(Tensor_Str[k])
+        lanes_one_channel = lanes[:,:,object_class]
+        height, width= lanes_one_channel.shape
+        pred = np.zeros((height, width), dtype=np.uint8)
         # pred[lanes_one_channel > th] = 4
-        pred[lanes_one_channel > th] = 250
-        pred_3chan=np.repeat(pred.reshape(256, 512, 1), 3, axis=2)
-
-        compute_one(pred_3chan, GT_Str[k])
+        pred[lanes_one_channel > th] = 1
+        # pred_3chan=np.repeat(pred.reshape(height, width, 1), 3, axis=2)
+        compute_one(pred, GT_Str[k])
 
 full_one()
 
@@ -100,10 +72,13 @@ full_one()
 
 acc, cls_pre, cls_rec, cls_f1, cls_iu, hist = running_metrics_val.get_scores()
 tt = time.time() - t
-pre.append(cls_pre)
-rec.append(cls_rec)
-np.save("pre",pre)
-np.save("rec",rec)
+pre.append(cls_pre[1])
+rec.append(cls_rec[1])
+pre_path='/home/spl03/code/pytorch-semseg-fp16/get_score/Vaihingen/PR/fcn8s/pre_'+str(object_class)+'.npy'
+rec_path='/home/spl03/code/pytorch-semseg-fp16/get_score/Vaihingen/PR/fcn8s/rec_'+str(object_class)+'.npy'
+
+# np.save(pre_path,pre)
+# np.save(rec_path,rec)
 print("cls pre")
 print(cls_pre)
 print("cls rec")

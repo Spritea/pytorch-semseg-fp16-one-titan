@@ -29,7 +29,7 @@ class runningScore(object):
         t2=lp.flatten()
         fh=self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
         self.confusion_matrix += fh
-        # print("kk")
+        a=fh
 
     def get_scores(self):
         """Returns accuracy score evaluation result.
